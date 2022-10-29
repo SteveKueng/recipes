@@ -103,6 +103,7 @@ class IntuneImporter(Processor):
         }
     }
     output_variables = {
+        "intune_app_changed": {"description": "True if item was imported."},
         "intune_importer_summary_result": {
             "description": "Description of interesting results."
         },
@@ -250,7 +251,6 @@ class IntuneImporter(Processor):
         pkg_icon = self.env.get("pkg_icon")
         childApps = []
 
-
         #create childapps
         childApps.append(self.getChildApp(pkg_bundleID, pkg_build, pkg_version))
         #create lobapp
@@ -258,14 +258,13 @@ class IntuneImporter(Processor):
         #get credentials
         credentials = self.getCredentials(TENANT_ID, APPLICATION_ID, APP_SECRET)
         
-
-        mobildeapp_result = self.get(credentials, '/deviceAppManagement/mobileApps?$filter=(isof("microsoft.graph.macOSLobApp"))&$search={}'.format(pkg_title))
+        #/deviceAppManagement/mobileApps?$filter=(isof("microsoft.graph.macOSLobApp"))&$search=
+        mobildeapp_result = self.get(credentials, '/deviceAppManagement/mobileApps?$search=' + pkg_title)
         contentApps = self.getContendFromReuqestResult(mobildeapp_result)
-        if len(self.findVersion(pkg_version, contentApps)) > 0:
-            print("App already exists")
+        if len(self.findVersion(pkg_version, contentApps["value"])) > 0:
+            self.env["intune_app_changed"] = False
+            self.output(f'{pkg_title + " " + pkg_version} already exists')
             return
-        
-        raise ProcessorError("Test")
         
         #create intune app
         macOSLobApp_result = self.post(credentials, '/deviceAppManagement/mobileApps', macOSLobApp)
@@ -388,6 +387,9 @@ class IntuneImporter(Processor):
 
         time.sleep(5)
 
+        self.env["intune_app_changed"] = True
+        self.env["pkg_title"] = pkg_title
+        self.env["pkg_version"] = pkg_version
         self.env["munki_importer_summary_result"] = {
             "summary_text": "The following new items were imported into Intune:",
             "report_fields": [
@@ -405,6 +407,7 @@ class IntuneImporter(Processor):
                 "ignore_app_version": pkg_ignoreAppVersion,
             },
         }
+        self.output(f'Uploaded: {self.env["pkg_title"] + " " + self.env["pkg_version"]}')
 
 if __name__ == "__main__":
     PROCESSOR = IntuneImporter()
