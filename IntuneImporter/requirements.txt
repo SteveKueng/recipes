@@ -4,3 +4,4 @@ msgraph-core
 azure-identity
 pycryptodome
 pycryptodomex
+Pillow
