@@ -217,6 +217,10 @@ class IntuneImporter(Processor):
         return (h_mac + iv_data, fileEncryptionInfo)
 
 
+    def findVersion(version, test_list):
+        return [element for element in test_list if element['versionNumber'] == version]
+
+
     def getContendFromReuqestResult(self, result):
         content_json = result._content.decode('utf8').replace("'", '"').replace("(\"", '(\\"').replace("\")", '\\")')
         return json.loads(content_json)
@@ -246,19 +250,30 @@ class IntuneImporter(Processor):
         pkg_icon = self.env.get("pkg_icon")
         childApps = []
 
+
         #create childapps
         childApps.append(self.getChildApp(pkg_bundleID, pkg_build, pkg_version))
         #create lobapp
         macOSLobApp = self.getMacOSLobApp(pkg_title, pkg_description, pkg_publisher, pkg_privacyInformationUrl, pkg_informationUrl, pkg_owner, pkg_developer, pkg_notes, pkg_filename, pkg_bundleID, pkg_build, pkg_version, childApps, pkg_isFeatured, pkg_ignoreAppVersion, pkg_installAsManaged)
         #get credentials
         credentials = self.getCredentials(TENANT_ID, APPLICATION_ID, APP_SECRET)
+        
+
+        mobildeapp_result = self.get(credentials, '/deviceAppManagement/mobileApps?$filter=(isof("microsoft.graph.macOSLobApp"))&$search={}'.format(pkg_title))
+        contentApps = self.getContendFromReuqestResult(mobildeapp_result)
+        if len(self.findVersion(pkg_version, contentApps)) > 0:
+            print("App already exists")
+            return
+        
+        raise ProcessorError("Test")
+        
         #create intune app
-        mobildeapp_result = self.post(credentials, '/deviceAppManagement/mobileApps', macOSLobApp)
-        if mobildeapp_result.status_code != 201:
-            raise ProcessorError("ERROR: creating mobileApp failed. Status code - " + str(mobildeapp_result.status_code))
+        macOSLobApp_result = self.post(credentials, '/deviceAppManagement/mobileApps', macOSLobApp)
+        if macOSLobApp_result.status_code != 201:
+            raise ProcessorError("ERROR: creating mobileApp failed. Status code - " + str(macOSLobApp_result.status_code))
         
         #get app ID
-        content = self.getContendFromReuqestResult(mobildeapp_result)
+        content = self.getContendFromReuqestResult(macOSLobApp_result)
         appID = content['id']
 
         url = '/deviceAppManagement/mobileApps/' + appID + '/microsoft.graph.macOSLobApp/contentVersions'
