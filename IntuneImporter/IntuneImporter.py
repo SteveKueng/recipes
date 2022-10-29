@@ -217,7 +217,7 @@ class IntuneImporter(Processor):
         return (h_mac + iv_data, fileEncryptionInfo)
 
 
-    def findVersion(version, test_list):
+    def findVersion(self, version, test_list):
         return [element for element in test_list if element['versionNumber'] == version]
 
 
