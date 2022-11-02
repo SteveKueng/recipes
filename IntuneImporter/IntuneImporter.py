@@ -303,7 +303,7 @@ class IntuneImporter(Processor):
         files_contentID = files_content['id']
         files_url = '/deviceAppManagement/mobileApps/' + appID + '/microsoft.graph.macOSLobApp/contentVersions/' + contentVersionsID + '/files/' + files_contentID
         
-        attempts = 20
+        attempts = 40
         while attempts > 0:
             file = self.get(credentials, files_url)
             file_content = self.getContendFromReuqestResult(file)
@@ -312,7 +312,7 @@ class IntuneImporter(Processor):
             if file_content["uploadState"] == "azureStorageUriRequestFailed":
                 raise ProcessorError("ERROR: azureStorageUriRequestFailed failed")
 
-            time.sleep(10)
+            time.sleep(5)
             attempts-=1
 
         if file_content["uploadState"] != "azureStorageUriRequestSuccess":
@@ -361,7 +361,7 @@ class IntuneImporter(Processor):
             raise ProcessorError("ERROR: commitFile failed. Status code - " + str(commitFile_result.status_code))
 
         files_url = '/deviceAppManagement/mobileApps/' + appID + '/microsoft.graph.macOSLobApp/contentVersions/' + contentVersionsID + '/files/' + files_contentID
-        attempts = 20
+        attempts = 40
         while attempts > 0:
             file = self.get(credentials, files_url)
             file_content = self.getContendFromReuqestResult(file)
@@ -370,7 +370,7 @@ class IntuneImporter(Processor):
             if file_content["uploadState"] == "commitFileFailed":
                 raise ProcessorError("ERROR: commitFileFailed failed")
 
-            time.sleep(10)
+            time.sleep(5)
             attempts-=1
 
         if file_content["uploadState"] != "commitFileSuccess":
@@ -390,7 +390,7 @@ class IntuneImporter(Processor):
         self.env["intune_app_changed"] = True
         self.env["pkg_title"] = pkg_title
         self.env["pkg_version"] = pkg_version
-        self.env["munki_importer_summary_result"] = {
+        self.env["intune_importer_summary_result"] = {
             "summary_text": "The following new items were imported into Intune:",
             "report_fields": [
                 "name",
