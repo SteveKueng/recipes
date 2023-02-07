@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Description</key>
+	<string>This recipe downloads the signed installer package that Mozilla made available starting in Firefox 69.0, and imports the pkg file into a Microsoft Intune tenant.
+
+The RELEASE key used in the standard Firefox recipes are not yet supported.
+LOCALE controls the language localization to be downloaded.
+Examples include 'en-US', 'de', 'sv-SE', and 'zh-TW'
+See the following URL for possible LOCALE values:
+    http://ftp.mozilla.org/pub/firefox/releases/latest/README.txt
+</string>
+	<key>Identifier</key>
+	<string>com.github.stevekueng.intune.FirefoxSignedPkg</string>
+	<key>Input</key>
+		<dict>
+			<key>NAME</key>
+			<string>Firefox</string>
+			<key>description</key>
+			<string>Mozilla Firefox is a free and open source web browser.</string>
+			<key>developer</key>
+			<string>Mozilla</string>
+			<key>display_name</key>
+			<string>Mozilla Firefox</string>
+		</dict>
+	<key>MinimumVersion</key>
+	<string>1.4.1</string>
+	<key>ParentRecipe</key>
+	<string>com.github.autopkg.download.FirefoxSignedPkg</string>
+	<key>Process</key>
+		<array>
+			<dict>
+				<key>Arguments</key>
+				<dict>
+					<key>flat_pkg_path</key>
+					<string>%pathname%</string>
+					<key>destination_path</key>
+					<string>%RECIPE_CACHE_DIR%/unpack</string>
+				</dict>
+				<key>Processor</key>
+				<string>FlatPkgUnpacker</string>
+			</dict>
+			<dict>
+				<key>Arguments</key>
+				<dict>
+					<key>pkg_payload_path</key>
+					<string>%RECIPE_CACHE_DIR%/unpack/Firefox.tmp1.pkg/Payload</string>
+					<key>destination_path</key>
+					<string>%RECIPE_CACHE_DIR%/payload/Applications</string>
+				</dict>
+				<key>Processor</key>
+				<string>PkgPayloadUnpacker</string>
+			</dict>
+			<dict>
+				<key>Arguments</key>
+				<dict>
+					<key>info_path</key>
+					<string>%RECIPE_CACHE_DIR%/payload/Applications/Firefox.app/Contents/Info.plist</string>
+					<key>plist_keys</key>
+					<dict>
+						<key>CFBundleShortVersionString</key>
+						<string>version</string>
+						<key>CFBundleIdentifier</key>
+						<string>bundleID</string>
+					</dict>
+				</dict>
+				<key>Processor</key>
+				<string>PlistReader</string>
+			</dict>
+			<dict>
+				<key>Arguments</key>
+				<dict>
+					<key>source_app</key>
+					<string>%RECIPE_CACHE_DIR%/payload/Applications/Firefox.app</string>
+				</dict>
+				<key>Processor</key>
+				<string>com.github.haircut.processors/AppIconExtractor</string>
+			</dict>
+			<dict>
+				<key>Arguments</key>
+				<dict>
+					<key>pkg_path</key>
+					<string>%pathname%</string>
+					<key>pkg_displayname</key>
+					<string>%display_name%</string>
+					<key>pkg_description</key>
+					<string>%description%</string>
+					<key>pkg_publisher</key>
+					<string>%developer%</string>
+					<key>pkg_version</key>
+					<string>%version%</string>
+					<key>pkg_build</key>
+					<string>%version%</string>
+					<key>pkg_bundleID</key>
+					<string>%bundleID%</string>
+					<key>pkg_icon</key>
+					<string>%RECIPE_CACHE_DIR%/%NAME%.png</string>
+				</dict>
+				<key>Processor</key>
+				<string>com.github.stevekueng.processors/IntuneImporter</string>
+			</dict>
+		</array>
+</dict>
+</plist>
