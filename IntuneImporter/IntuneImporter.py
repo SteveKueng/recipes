@@ -40,66 +40,66 @@ class IntuneImporter(Processor):
         },
         "pkg_displayname": {
             "required": True,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App name in Intune",
         },
         "pkg_description": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App description in Intune",
         },
         "pkg_publisher": {
             "required": True,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App publisher in Intune",
         },
         "pkg_version": {
             "required": True,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App version in Intune",
         },
         "pkg_build": {
             "required": True,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App build in Intune",
         },
         "pkg_bundleID": {
             "required": True,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App bundleID in Intune",
         },
         "pkg_privacyInformationUrl": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App privacyInformationUrl in Intune",
         },
         "pkg_informationUrl": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App informationUrl in Intune",
         },
         "pkg_owner": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App owner in Intune",
         },
         "pkg_developer": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App developer in Intune",
         },
         "pkg_notes": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "App notes in Intune",
         },
         "pkg_isFeatured": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "Enables as a featured app in Intune",
             "default": "False",
         },
         "pkg_ignoreAppVersion": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "Ignores app version",
             "default": "True",
         },
         "pkg_installAsManaged": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "Enables the app to be installed as managed",
             "default": "False",
         },
         "pkg_icon": {
             "required": False,
-            "description": "Path to a pkg or dmg to import.",
+            "description": "Specify an icon for the app",
         }
     }
     output_variables = {
