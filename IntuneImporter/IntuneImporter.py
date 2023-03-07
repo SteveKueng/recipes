@@ -34,70 +34,70 @@ class IntuneImporter(Processor):
             "description": "Generated app secret",
             "required": True,
         },
-        "pkg_path": {
+        "item_path": {
             "required": True,
             "description": "Path to a pkg or dmg to import.",
         },
-        "pkg_displayname": {
+        "displayname": {
             "required": True,
             "description": "App name in Intune",
         },
-        "pkg_description": {
+        "description": {
             "required": False,
             "description": "App description in Intune",
         },
-        "pkg_publisher": {
+        "publisher": {
             "required": True,
             "description": "App publisher in Intune",
         },
-        "pkg_version": {
+        "version": {
             "required": True,
             "description": "App version in Intune",
         },
-        "pkg_build": {
+        "build": {
             "required": True,
             "description": "App build in Intune",
         },
-        "pkg_bundleID": {
+        "bundleID": {
             "required": True,
             "description": "App bundleID in Intune",
         },
-        "pkg_privacyInformationUrl": {
+        "privacyInformationUrl": {
             "required": False,
             "description": "App privacyInformationUrl in Intune",
         },
-        "pkg_informationUrl": {
+        "informationUrl": {
             "required": False,
             "description": "App informationUrl in Intune",
         },
-        "pkg_owner": {
+        "owner": {
             "required": False,
             "description": "App owner in Intune",
         },
-        "pkg_developer": {
+        "developer": {
             "required": False,
             "description": "App developer in Intune",
         },
-        "pkg_notes": {
+        "notes": {
             "required": False,
             "description": "App notes in Intune",
         },
-        "pkg_isFeatured": {
+        "isFeatured": {
             "required": False,
             "description": "Enables as a featured app in Intune",
             "default": "False",
         },
-        "pkg_ignoreAppVersion": {
+        "ignoreAppVersion": {
             "required": False,
             "description": "Ignores app version",
             "default": "True",
         },
-        "pkg_installAsManaged": {
+        "installAsManaged": {
             "required": False,
             "description": "Enables the app to be installed as managed",
             "default": "False",
         },
-        "pkg_icon": {
+        "icon": {
             "required": False,
             "description": "Specify an icon for the app",
         }
@@ -145,7 +145,15 @@ class IntuneImporter(Processor):
         return childApp
 
 
-    def getMacOSLobApp(self, displayName, description, publisher, privacyInformationUrl, informationUrl, owner, developer, notes, fileName, bundleId, buildNumber, versionNumber, childApps, isFeatured = False, ignoreVersionDetection = True, installAsManaged = False):
+    def getIncludedApp(self, bundleID, version):
+        includedApp = {}
+        includedApp["@odata.type"] = "#microsoft.graph.macOSIncludedApp"
+        includedApp["bundleId"] = bundleID
+        includedApp["bundleVersion"] = version
+        return includedApp
+
+
+    def getMacOSLobApp(self, displayName, description, publisher, privacyInformationUrl, informationUrl, owner, developer, notes, fileName, bundleId, buildNumber, versionNumber, childApps, ignoreVersionDetection = True, installAsManaged = False, icon = None):
         LobApp = {}
         LobApp["@odata.type"] = "#microsoft.graph.macOSLobApp"
         LobApp["displayName"] = displayName
@@ -153,10 +161,9 @@ class IntuneImporter(Processor):
         LobApp["publisher"] = publisher
         LobApp["privacyInformationUrl"] = privacyInformationUrl
         LobApp["informationUrl"] = informationUrl
-        LobApp["owner"] = owner 
+        LobApp["owner"] = owner
         LobApp["developer"] = developer
         LobApp["notes"] = notes
-        LobApp["isFeatured"] = isFeatured
         LobApp["fileName"] = fileName
         LobApp["bundleId"] = bundleId
         LobApp["buildNumber"] = buildNumber
@@ -171,13 +178,57 @@ class IntuneImporter(Processor):
         for childApp in childApps:
             LobApp["childApps"].append(childApp)
 
+        if icon:
+            LobApp["largeIcon"] = {}
+            LobApp["largeIcon"]["@odata.type"] = "#microsoft.graph.mimeContent"
+            LobApp["largeIcon"]["type"] = "image/png"
+
+            with open(icon, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read())
+            LobApp["largeIcon"]["value"] = encoded_string.decode('utf-8')
+
         return LobApp
 
 
-    def getMobileAppContentFile(self, pkg_filename, pkg_file, pkg_file_encr):
+    def getMacOSDmgApp(self, displayName, description, publisher, privacyInformationUrl, informationUrl, owner, developer, notes, fileName, bundleId, buildNumber, includedApps, ignoreVersionDetection = True, icon = None):
+        DmgApp = {}
+        DmgApp["@odata.type"] = "#microsoft.graph.macOSDmgApp"
+        DmgApp["displayName"] = displayName
+        DmgApp["description"] = description
+        DmgApp["publisher"] = publisher
+        DmgApp["privacyInformationUrl"] = privacyInformationUrl
+        DmgApp["informationUrl"] = informationUrl
+        DmgApp["owner"] = owner
+        DmgApp["developer"] = developer
+        DmgApp["notes"] = notes
+        DmgApp["fileName"] = fileName
+        DmgApp["primaryBundleId"] = bundleId
+        DmgApp["primaryBundleVersion"] = buildNumber
+        DmgApp["ignoreVersionDetection"] = ignoreVersionDetection
+        DmgApp["minimumSupportedOperatingSystem"] = {}
+        DmgApp["minimumSupportedOperatingSystem"]["@odata.type"] = "#microsoft.graph.macOSMinimumOperatingSystem"
+        DmgApp["minimumSupportedOperatingSystem"]["v11_0"] = True
+        DmgApp["includedApps"] = []
+
+        for includedApp in includedApps:
+            DmgApp["includedApps"].append(includedApp)
+        
+        if icon:
+            DmgApp["largeIcon"] = {}
+            DmgApp["largeIcon"]["@odata.type"] = "#microsoft.graph.mimeContent"
+            DmgApp["largeIcon"]["type"] = "image/png"
+
+            with open(icon, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read())
+            DmgApp["largeIcon"]["value"] = encoded_string.decode('utf-8')
+
+        return DmgApp
+
+
+    def getMobileAppContentFile(self, filename, pkg_file, pkg_file_encr):
         mobileAppContentFile = {}
         mobileAppContentFile["@odata.type"] = "#microsoft.graph.mobileAppContentFile"
-        mobileAppContentFile["name"] = pkg_filename
+        mobileAppContentFile["name"] = filename
         mobileAppContentFile["size"] = os.path.getsize(pkg_file)
         mobileAppContentFile["sizeEncrypted"] = os.path.getsize(pkg_file_encr)
         mobileAppContentFile["manifest"] = None
@@ -219,7 +270,14 @@ class IntuneImporter(Processor):
 
 
     def findVersion(self, version, test_list):
-        return [element for element in test_list if element['versionNumber'] == version]
+        for element in test_list:
+            if element.get('primaryBundleVersion'):
+                if element['primaryBundleVersion'] == version:
+                    return True
+            if element.get('versionNumber'):
+                if element['versionNumber'] == version:
+                    return True
+        return False
 
 
     def getContendFromReuqestResult(self, result):
@@ -231,39 +289,47 @@ class IntuneImporter(Processor):
         APPLICATION_ID = self.env.get("APPLICATION_ID")
         APP_SECRET = self.env.get("APP_SECRET")
         RECIPE_CACHE_DIR = self.env.get("RECIPE_CACHE_DIR")
-        pkg_path = self.env.get("pkg_path")
+        item_path = self.env.get("item_path")
 
-        pkg_filename = Path(pkg_path).name
-        pkg_title = self.env.get("pkg_displayname")
-        pkg_description = self.env.get("pkg_description", "")
-        pkg_publisher = self.env.get("pkg_publisher")
-        pkg_version = self.env.get("pkg_version")
-        pkg_build = self.env.get("pkg_build")
-        pkg_bundleID = self.env.get("pkg_bundleID")
-        pkg_privacyInformationUrl = self.env.get("pkg_privacyInformationUrl", "")
-        pkg_informationUrl = self.env.get("pkg_informationUrl", "")
-        pkg_owner = self.env.get("pkg_owner", "")
-        pkg_developer = self.env.get("pkg_developer", "")
-        pkg_notes = self.env.get("pkg_notes", "Imported by AutoPkg")
-        pkg_ignoreAppVersion = self.env.get("pkg_ignoreAppVersion", True)
-        pkg_installAsManaged = self.env.get("pkg_installAsManaged", False)
-        pkg_isFeatured = self.env.get("pkg_isFeatured", False)
-        pkg_icon = self.env.get("pkg_icon")
+        item_filename = Path(item_path).name
+        title = self.env.get("displayname")
+        description = self.env.get("description", "")
+        publisher = self.env.get("publisher")
+        version = self.env.get("version")
+        build = self.env.get("build")
+        bundleID = self.env.get("bundleID")
+        privacyInformationUrl = self.env.get("privacyInformationUrl", "")
+        informationUrl = self.env.get("informationUrl", "")
+        owner = self.env.get("owner", "")
+        developer = self.env.get("developer", "")
+        notes = self.env.get("notes", "Imported by AutoPkg")
+        ignoreAppVersion = self.env.get("ignoreAppVersion", True)
+        installAsManaged = self.env.get("installAsManaged", False)
+        isFeatured = self.env.get("isFeatured", False)
+        icon = self.env.get("icon")
         childApps = []
 
-        #create childapps
-        childApps.append(self.getChildApp(pkg_bundleID, pkg_build, pkg_version))
-        #create lobapp
-        macOSLobApp = self.getMacOSLobApp(pkg_title, pkg_description, pkg_publisher, pkg_privacyInformationUrl, pkg_informationUrl, pkg_owner, pkg_developer, pkg_notes, pkg_filename, pkg_bundleID, pkg_build, pkg_version, childApps, pkg_isFeatured, pkg_ignoreAppVersion, pkg_installAsManaged)
+        if item_filename.endswith(".pkg"):
+            #create childapps
+            childApps.append(self.getChildApp(bundleID, build, version))
+            #create lobapp
+            macOSLobApp = self.getMacOSLobApp(title, description, publisher, privacyInformationUrl, informationUrl, owner, developer, notes, item_filename, bundleID, build, version, childApps, ignoreAppVersion, installAsManaged, icon)
+    
+        if item_filename.endswith(".dmg"):
+            includedApps = []
+            includedApps.append(self.getIncludedApp(bundleID, version))
+            #create lobapp
+            macOSLobApp = self.getMacOSDmgApp(title, description, publisher, privacyInformationUrl, informationUrl, owner, developer, notes, item_filename, bundleID, version, includedApps, ignoreAppVersion, icon)
+
         #get credentials
         credentials = self.getCredentials(TENANT_ID, APPLICATION_ID, APP_SECRET)
         
         #/deviceAppManagement/mobileApps?$filter=(isof("microsoft.graph.macOSLobApp"))&$search=
-        mobildeapp_result = self.get(credentials, '/deviceAppManagement/mobileApps?$search=' + pkg_title)
+        mobildeapp_result = self.get(credentials, '/deviceAppManagement/mobileApps?$search=' + title)
         contentApps = self.getContendFromReuqestResult(mobildeapp_result)
-        if len(self.findVersion(pkg_version, contentApps["value"])) > 0:
+        if self.findVersion(version, contentApps["value"]):
             self.env["intune_app_changed"] = False
-            self.output(f'{pkg_title + " " + pkg_version} already exists')
+            self.output(f'{title + " " + version} already exists')
             return
         
         #create intune app
@@ -284,14 +350,14 @@ class IntuneImporter(Processor):
         contentVersionsID = contentVersions['id']
 
         # encrypt file
-        encrypted_data, fileEncryptionInfo = self.encryptPKG(pkg_path)
+        encrypted_data, fileEncryptionInfo = self.encryptPKG(item_path)
         new_file, filename = tempfile.mkstemp(dir=RECIPE_CACHE_DIR)
         with open(new_file, "wb") as binary_file:
             # Write bytes to file
             binary_file.write(encrypted_data)
 
         # get mobileAppContentFile
-        mobileAppContentFile = self.getMobileAppContentFile(pkg_filename, pkg_path, filename)
+        mobileAppContentFile = self.getMobileAppContentFile(item_filename, item_path, filename)
 
         # get content version file
         files_url = '/deviceAppManagement/mobileApps/' + appID + '/microsoft.graph.macOSLobApp/contentVersions/' + contentVersionsID + '/files'
@@ -388,8 +454,8 @@ class IntuneImporter(Processor):
         time.sleep(5)
 
         self.env["intune_app_changed"] = True
-        self.env["pkg_title"] = pkg_title
-        self.env["pkg_version"] = pkg_version
+        self.env["title"] = title
+        self.env["version"] = version
         self.env["intune_importer_summary_result"] = {
             "summary_text": "The following new items were imported into Intune:",
             "report_fields": [
@@ -400,14 +466,14 @@ class IntuneImporter(Processor):
                 "ignore_app_version",
             ],
             "data": {
-                "name": pkg_title,
-                "version": pkg_version,
+                "name": title,
+                "version": version,
                 "appID": appID,
-                "installed_as_managed": pkg_installAsManaged,
-                "ignore_app_version": pkg_ignoreAppVersion,
+                "installed_as_managed": installAsManaged,
+                "ignore_app_version": ignoreAppVersion,
             },
         }
-        self.output(f'Uploaded: {self.env["pkg_title"] + " " + self.env["pkg_version"]}')
+        self.output(f'Uploaded: {self.env["title"] + " " + self.env["version"]}')
 
 if __name__ == "__main__":
     PROCESSOR = IntuneImporter()

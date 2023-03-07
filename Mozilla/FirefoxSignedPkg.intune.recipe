@@ -80,22 +80,22 @@ See the following URL for possible LOCALE values:
 			<dict>
 				<key>Arguments</key>
 				<dict>
-					<key>pkg_path</key>
+					<key>item_path</key>
 					<string>%pathname%</string>
-					<key>pkg_displayname</key>
+					<key>displayname</key>
 					<string>%display_name%</string>
-					<key>pkg_description</key>
+					<key>description</key>
 					<string>%description%</string>
-					<key>pkg_publisher</key>
+					<key>publisher</key>
 					<string>%developer%</string>
-					<key>pkg_version</key>
+					<key>version</key>
 					<string>%version%</string>
-					<key>pkg_build</key>
+					<key>build</key>
 					<string>%version%</string>
-					<key>pkg_bundleID</key>
+					<key>bundleID</key>
 					<string>%bundleID%</string>
-					<key>pkg_icon</key>
-					<string>%RECIPE_CACHE_DIR%/%NAME%.png</string>
+					<key>icon</key>
+					<string>%app_icon_path%</string>
 				</dict>
 				<key>Processor</key>
 				<string>com.github.stevekueng.processors/IntuneImporter</string>
