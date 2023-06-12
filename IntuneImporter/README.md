@@ -1,5 +1,7 @@
 # IntuneImporter
 
+https://blog.ikueng.ch/2023/03/21/microsoft-intune-and-autopkg/
+
 ## Description
 
 Imports pkgs and dmgs in Microsoft Intune.
